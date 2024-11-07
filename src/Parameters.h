@@ -58,7 +58,7 @@ struct Variable {
   template<typename T>
   T get() const {
     if (!std::holds_alternative<T>(value)) {
-      std::cerr << "ERROR in 'Variable': requested type does not match stored type" << std::endl;
+      std::cerr << "ERROR in `Variable`: requested type does not match stored type" << std::endl;
       return T{}; // Return default value for the requested type if there’s a type mismatch
     }
     return std::get<T>(value);

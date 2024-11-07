@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <variant>
+#include <stdexcept>
 
 // Define a "Variable" that can store and return different data types
 struct Variable {
@@ -54,6 +55,7 @@ struct Variable {
 // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 // --------------------------------------------------------------------------------------------------------
   
+
   // Getter template function to retrieve the value with type checking
   template<typename T>
   T get() const {
@@ -63,7 +65,7 @@ struct Variable {
     }
     return std::get<T>(value);
   }
- /*
+/* 
   void check_type_match(ValueType requested) { if (type != requested) std::cerr << "ERROR in `Variable`; the requested value does not match the Variable's type" << std::endl; }
 */
 

@@ -49,24 +49,32 @@ public:
   // ------------------- Declare public member functions ------------------ //
 
   // Parameterized constructor method
-  BakerSterlingVortex(double* parameters) : WindField() {
+  BakerSterlingVortex(const Parameters& parameters) : WindField() {
     DEBUG(std::cout << "Creating new BakerSterlingVortex WindField model" << std::endl;)
-    Um    = parameters[0];  // [m/s] reference radial velocity
-    rm    = parameters[1];  // [m]   reference radius
-    zm    = parameters[2];  // [m]   reference height
-    S     = parameters[3];  // swirl ratio (ratio of max circumferential velocity to radial velocity at reference height)
+    
+    // Initialize parameters with fallback to default values if not provided
+    Um    = parameters.at("Um").get<double>();  // [m/s] reference radial velocity
+    rm    = parameters.at("rm").get<double>();  // [m]   reference radius
+    zm    = parameters.at("zm").get<double>();  // [m]   reference height
+    S     = parameters.at("S").get<double>();  // swirl ratio (ratio of max circumferential velocity to radial velocity at reference height)
+    gamma = parameters.at("gamma").get<double>();
+    rho0  = parameters.at("rho0").get<double>();  // [kg/m^3] reference density of air at STP
+   
+   std::vector<double> initial_center = parameters.at("initial_center").get<std::vector<double>>();
+    xc0   = initial_center[0];  // [m]
+    yc0   = initial_center[1];  // [m]
+    zc0   = initial_center[2];  // [m]
+
+    std::vector<double> initial_velocity = parameters.at("initial_velocity").get<std::vector<double>>();
+    vxc = initial_velocity[0];  // [m/s]
+    vyc = initial_velocity[1]; // [m/s]
+    vzc = initial_velocity[2]; // [m/s]
+
     K     = S*(2.0/std::log(2.0));
-    gamma = parameters[4];
     delta = zm/rm;
-    rho0  = parameters[5];  // [kg/m^3] reference density of air at STP
-    xc0   = parameters[6];  // [m]
-    yc0   = parameters[7];  // [m]
-    zc0   = parameters[8];  // [m]
-    vxc   = parameters[9];  // [m/s]
-    vyc   = parameters[10]; // [m/s]
-    vzc   = parameters[11]; // [m/s]
   } // BakerSterlingVortex()
 
+/*
   // Parameterized constructor method
   BakerSterlingVortex(Parameters& parameters) : WindField() {
     if (parameters.count("initial_center") > 0) {
@@ -76,17 +84,18 @@ public:
       zc0 = xyzc[2];
     }
   } // BakerSterlingVortex()
+*/
 
   // Virtual method implementation to compute the fluid velocity and density at a specified time,
   // and at multiple evaluation points simultaneously
   virtual void get_fluid_velocity_and_density(int num_points, double time,
 				              const double* x, const double* y, const double* z,
-				              double* vx, double* vy, double* vz, double* rhof) {
+				              double* vx, double* vy, double* vz, double* rhof) override{
 
     // Define the shifted center of the vortex at the current evaluation time
-    double xct = xc0 + vxc*time; // [m]
-    double yct = yc0 + vyc*time; // [m]
-    double zct = zc0 + vzc*time; // [m]
+    double xct = xc0 + vxc * time; // [m]
+    double yct = yc0 + vyc * time; // [m]
+    double zct = zc0 + vzc * time; // [m]
 
     // Loop over all evaluation points
     for (int i=0; i<num_points; i++) {
@@ -101,11 +110,11 @@ public:
 
       // Ignore points that are sufficiently far away
       if ((rbar > 100.0) || (zbar > 100.0)) {
-	vx[i]   = 0.0;
-	vy[i]   = 0.0;
-	vz[i]   = 0.0;
-	rhof[i] = 0.0;
-	continue;
+	      vx[i]   = 0.0;
+	      vy[i]   = 0.0;
+	      vz[i]   = 0.0;
+	      rhof[i] = 0.0;
+	      continue;
       }
 
       // Compute normalized radial, tangential, and vertical velocity of the vortex
@@ -127,20 +136,20 @@ public:
       // Check for nan/inf values
       DEBUG(
       if ((inv_rp != inv_rp) || (log_one_zbar2 != log_one_zbar2) || (Ubar != Ubar) || (Vbar != Vbar) || (Wbar != Wbar)) {
-	std::cout << "Bad BakerSterlingVortex velocity computed at evaluation point " << i << std::endl;
-	std::cout << " time " <<  time << std::endl;
-	std::cout << "    x " <<  x[i] << std::endl;
-	std::cout << "    y " <<  y[i] << std::endl;
-	std::cout << "    z " <<  z[i] << std::endl;
-	std::cout << " inv_rp " << inv_rp << std::endl;
-	std::cout << " zbar " << zbar << std::endl;
-	std::cout << " one_zbar2 " << one_zbar2 << std::endl;
-	std::cout << " log_one_zbar2 " << log_one_zbar2 << std::endl;
-	std::cout << " Ubar " <<  Ubar << std::endl;
-	std::cout << " Vbar " <<  Vbar << std::endl;
-	std::cout << " Wbar " <<  Wbar << std::endl;
-	std::exit(1);
-      }
+        std::cout << "Bad BakerSterlingVortex velocity computed at evaluation point " << i << std::endl;
+        std::cout << " time " <<  time << std::endl;
+        std::cout << "    x " <<  x[i] << std::endl;
+        std::cout << "    y " <<  y[i] << std::endl;
+        std::cout << "    z " <<  z[i] << std::endl;
+        std::cout << " inv_rp " << inv_rp << std::endl;\
+        std::cout << " zbar " << zbar << std::endl;
+        std::cout << " one_zbar2 " << one_zbar2 << std::endl;
+        std::cout << " log_one_zbar2 " << log_one_zbar2 << std::endl;
+        std::cout << " Ubar " <<  Ubar << std::endl;
+        std::cout << " Vbar " <<  Vbar << std::endl;
+        std::cout << " Wbar " <<  Wbar << std::endl;
+        std::exit(1);
+        }
 	    )
 
     } // for i=1,...,num_points
@@ -184,27 +193,32 @@ public:
   // ------------------- Declare public member functions ------------------ //
 
   // Parameterized constructor method
-  RankineVortex(double* parameters) : WindField() {
+  RankineVortex(const Parameters& parameters) : WindField() {
     DEBUG(std::cout << "Creating new RankineVortex WindField model" << std::endl;)
-    Um    = parameters[0];  // [m/s] reference tangential velocity
-    rm    = parameters[1];  // [m]   reference radius
-    rc    = parameters[2];  // [m]   reference height
-    E     = parameters[3];  // swirl ratio (ratio of max circumferential velocity to radial velocity at reference height)
+    
+    Um    = parameters.at("Um").get<double>();  // [m/s] reference tangential velocity
+    rm    = parameters.at("rm").get<double>();  // [m]   reference radius
+    rc    = parameters.at("rc").get<double>();  // [m]   reference height
+    E     = parameters.at("E").get<double>();  // swirl ratio (ratio of max circumferential velocity to radial velocity at reference height)
     //      parameters[4];  // (unused)
-    rho0  = parameters[5];  // [kg/m^3] reference density of air at STP
-    xc0   = parameters[6];  // [m]
-    yc0   = parameters[7];  // [m]
-    zc0   = parameters[8];  // [m]
-    vxc   = parameters[9];  // [m/s]
-    vyc   = parameters[10]; // [m/s]
-    vzc   = parameters[11]; // [m/s]
+    rho0  = parameters.at("rho0").get<double>();  // [kg/m^3] reference density of air at STP
+    
+    std::vector<double> initial_center = parameters.at("initial_center").get<std::vector<double>>();
+    xc0   = initial_center[0];  // [m]
+    yc0   = initial_center[1];  // [m]
+    zc0   = initial_center[2];  // [m]
+
+    std::vector<double> initial_velocity = parameters.at("initial_velocity").get<std::vector<double>>();
+    vxc   = initial_velocity[0]; // [m/s]
+    vyc   = initial_velocity[1]; // [m/s]
+    vzc   = initial_velocity[2]; // [m/s]
   } // RankineVortex()
 
   // Virtual method implementation to compute the fluid velocity and density at a specified time,
   // and at multiple evaluation points simultaneously
   virtual void get_fluid_velocity_and_density(int num_points, double time,
 				              const double* x, const double* y, const double* z,
-				              double* vx, double* vy, double* vz, double* rhof) {
+				              double* vx, double* vy, double* vz, double* rhof) override {
 
     // Define the shifted center of the vortex at the current evaluation time
     double xct = xc0 + vxc*time; // [m]
@@ -224,13 +238,13 @@ public:
       // Compute normalized tangential velocity of the vortex
       double vtf;
       if (rp<rm) {
-	if (rp<rc) {
-	  vtf = Um*rbar;
-	} else {
-	  vtf = Um*std::pow(1.0/(rbar+std::numeric_limits<double>::min()),E);
-	}
+        if (rp<rc) {
+          vtf = Um*rbar;
+        } else {
+          vtf = Um*std::pow(1.0/(rbar+std::numeric_limits<double>::min()),E);
+        }
       } else {
-	vtf = 0.0;
+          vtf = 0.0;
       }
 
       // Compute the x,y,z components of the fluid velocity
@@ -273,11 +287,11 @@ private:
 
 
 // Factory method to create a new WindField model from (generic) parameterized inputs
-WindField* new_WindField(const char* type_cstr, double* parameters) {
+WindField* new_WindField(const std::string& type, const Parameters& parameters) {
 
   // Attempt to create a new wind field model given the passed input parameters
-  std::string type(type_cstr);
-  if        (type == "BakerSterlingVortex") {
+  // std::string type(type_cstr);
+  if (type == "BakerSterlingVortex") {
     return new BakerSterlingVortex(parameters);
   } else if (type == "RankineVortex") {
     return new RankineVortex(parameters);

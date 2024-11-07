@@ -1,4 +1,4 @@
-#include "../src/Parameters.h"
+#include "../src/parameters.h"
 #include <iostream>
 
 int main() {
